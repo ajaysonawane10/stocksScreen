@@ -1,0 +1,73 @@
+name: Stock Screener — Daily Run + Telegram + Slack
+
+on:
+  # Run at 3:45 PM IST (10:15 UTC) on weekdays (Mon–Fri)
+  schedule:
+    - cron: '15 10 * * 1,2,3,4,5'
+
+  # Allow manual trigger from GitHub Actions UI
+  workflow_dispatch:
+
+jobs:
+  screen-and-notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      # ── 1. Checkout code ──────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Python ──────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # ── 3. Set up Node.js (for nse_fetch.js) ─────────────
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install stock-nse-india npm package (global)
+        run: npm install -g stock-nse-india
+
+      # ── 4. Install Python dependencies ────────────────────
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      # ── 5. Run the screener ───────────────────────────────
+      - name: Run stock screener
+        run: python screener.py
+
+      # ── 6. List generated files (debug) ───────────────────
+      - name: List generated Excel files
+        run: ls -la output/*.xlsx || echo "No xlsx files found"
+
+      # ── 7. Send reports to Telegram ───────────────────────
+      - name: Send reports to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m utils.send_telegram
+
+      # ── 8. Send reports to Slack ──────────────────────────
+      - name: Send reports to Slack
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+        run: python -m utils.send_slack
+
+      # ── 9. Upload as workflow artifacts (backup) ──────────
+      - name: Upload Excel reports as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-reports-${{ github.run_number }}
+          path: |
+            output/EW_*.xlsx
+            output/WW_*.xlsx
+            output/*_report.md
+          retention-days: 30
