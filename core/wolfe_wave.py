@@ -716,6 +716,12 @@ def analyze_wolfe_wave(df: pd.DataFrame, symbol: str):
         sweet_zone_quality = "Excellent" if abs(best['p5_deviation']) <= 1.5 else (
             "Good" if abs(best['p5_deviation']) <= 3.0 else "Fair"
         )
+        line_13_quality = "High" if abs(best['p5_deviation']) <= 1.5 else (
+            "Medium" if abs(best['p5_deviation']) <= 3.0 else "Normal"
+        )
+        line_24_quality = "High" if best['score'] >= 75 else (
+            "Medium" if best['score'] >= 60 else "Normal"
+        )
 
         if best['type'] == 'Bullish':
             if current_price > p5_price * 1.03:
@@ -750,6 +756,9 @@ def analyze_wolfe_wave(df: pd.DataFrame, symbol: str):
             'confidence': round(total_score, 1),
             'current_price': round(current_price, 2),
             'sweet_zone_quality': sweet_zone_quality,
+            'line_13_quality': line_13_quality,
+            'line_24_quality': line_24_quality,
+            'converging': True,
 
             # 5 wave points
             'p1': round(best['p1']['price'], 2),

@@ -15,6 +15,7 @@ import os
 import sys
 import urllib.request
 import urllib.error
+import urllib.parse
 import datetime
 
 
@@ -30,18 +31,37 @@ def get_env(name: str) -> str:
     return value
 
 
-def slack_api(token: str, method: str, payload: dict) -> dict:
-    """Call a Slack Web API method (JSON body)."""
-    url = f"{SLACK_API}/{method}"
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url,
-        data=data,
-        headers={
-            "Content-Type": "application/json; charset=utf-8",
-            "Authorization": f"Bearer {token}",
-        },
-    )
+def slack_api(token: str, method: str, payload: dict, as_get: bool = False, as_form: bool = False) -> dict:
+    """Call a Slack Web API method."""
+    if as_get:
+        query = urllib.parse.urlencode(payload)
+        url = f"{SLACK_API}/{method}?{query}"
+        req = urllib.request.Request(
+            url,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+    elif as_form:
+        url = f"{SLACK_API}/{method}"
+        data = urllib.parse.urlencode(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+                "Authorization": f"Bearer {token}",
+            },
+        )
+    else:
+        url = f"{SLACK_API}/{method}"
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": f"Bearer {token}",
+            },
+        )
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             return json.loads(resp.read())
@@ -74,13 +94,15 @@ def upload_file(token: str, channel: str, filepath: str, title: str, initial_com
     filename = os.path.basename(filepath)
     filesize = os.path.getsize(filepath)
 
-    # Step 1: Get upload URL
+    # Step 1: Get upload URL (must use form-encoded POST)
     step1 = slack_api(token, "files.getUploadURLExternal", {
         "filename": filename,
-        "length": filesize,
-    })
+        "length": int(filesize),
+    }, as_form=True)
     if not step1.get("ok"):
-        print(f"  [FAIL] getUploadURLExternal: {step1.get('error')}")
+        error_msg = step1.get("error")
+        meta = step1.get("response_metadata", {})
+        print(f"  [FAIL] getUploadURLExternal: {error_msg} | details: {meta}")
         return False
 
     upload_url = step1["upload_url"]
@@ -110,7 +132,9 @@ def upload_file(token: str, channel: str, filepath: str, title: str, initial_com
     if step3.get("ok"):
         print(f"  [OK] Uploaded: {filename}")
         return True
-    print(f"  [FAIL] completeUploadExternal: {step3.get('error')}")
+    error_msg = step3.get("error")
+    meta = step3.get("response_metadata", {})
+    print(f"  [FAIL] completeUploadExternal: {error_msg} | details: {meta}")
     return False
 
 
