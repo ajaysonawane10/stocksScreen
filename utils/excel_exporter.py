@@ -5,12 +5,15 @@ Generates formatted Excel reports with date-based naming convention:
 - WW_DDMMYYYY.xlsx for Wolfe Wave reports
 """
 
+import logging
 import pandas as pd
 import datetime
 from pathlib import Path
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+
+logger = logging.getLogger(__name__)
 
 
 def get_excel_filename(report_type='EW'):
@@ -26,6 +29,43 @@ def get_excel_filename(report_type='EW'):
     today = datetime.datetime.now()
     date_str = today.strftime('%d%m%Y')
     return f"output/{report_type}_{date_str}.xlsx"
+
+
+def _get(r, key, default=''):
+    return r.get(key, default) if isinstance(r, dict) else default
+
+
+def _get_currency(r, key, decimals=0):
+    v = _get(r, key, None)
+    if v is None or v == '':
+        return ''
+    try:
+        if decimals == 0:
+            return f"₹{v:.0f}"
+        else:
+            return f"₹{v:.2f}"
+    except Exception:
+        return ''
+
+
+def _get_number(r, key, fmt='.2f'):
+    v = _get(r, key, None)
+    if v is None or v == '':
+        return ''
+    try:
+        return f"{v:{fmt}}"
+    except Exception:
+        return ''
+
+
+def _get_percent(r, key, decimals=1):
+    v = _get(r, key, None)
+    if v is None or v == '':
+        return ''
+    try:
+        return f"{v:.{decimals}f}%"
+    except Exception:
+        return ''
 
 
 def export_elliott_wave_to_excel(ranked_results, all_results, output_file=None):
@@ -72,7 +112,7 @@ def export_elliott_wave_to_excel(ranked_results, all_results, output_file=None):
         
         # ========== SHEET 2: DETAILED ANALYSIS ==========
         detail_data = []
-        for r in display_results[:10]:  # Detailed analysis for top 10
+        for r in display_results[:10]:
             detail_data.append({
                 'Stock': r['symbol'],
                 'Current Price': f"₹{r['current_price']:.2f}",
@@ -107,16 +147,18 @@ def export_elliott_wave_to_excel(ranked_results, all_results, output_file=None):
         # ========== SHEET 3: FIBONACCI LEVELS ==========
         fib_data = []
         for r in display_results[:10]:
+            fib_retrace = _get(r, 'fib_retrace', {}) or {}
+            fib_extension = _get(r, 'fib_extension', {}) or {}
             fib_data.append({
-                'Stock': r['symbol'],
-                '23.6%': f"₹{r['fib_retrace'].get('23.6%', 0):.2f}",
-                '38.2%': f"₹{r['fib_retrace'].get('38.2%', 0):.2f}",
-                '50.0%': f"₹{r['fib_retrace'].get('50.0%', 0):.2f}",
-                '61.8%': f"₹{r['fib_retrace'].get('61.8%', 0):.2f}",
-                '78.6%': f"₹{r['fib_retrace'].get('78.6%', 0):.2f}",
-                'Ext 100%': f"₹{r['fib_extension'].get('100%', 0):.2f}",
-                'Ext 161.8%': f"₹{r['fib_extension'].get('161.8%', 0):.2f}",
-                'Ext 261.8%': f"₹{r['fib_extension'].get('261.8%', 0):.2f}",
+                'Stock': _get(r, 'symbol', ''),
+                '23.6%': _get_currency({'': ''}, '',) if False else (f"₹{fib_retrace.get('23.6%', 0):.2f}" if fib_retrace.get('23.6%') is not None else ''),
+                '38.2%': (f"₹{fib_retrace.get('38.2%', 0):.2f}" if fib_retrace.get('38.2%') is not None else ''),
+                '50.0%': (f"₹{fib_retrace.get('50.0%', 0):.2f}" if fib_retrace.get('50.0%') is not None else ''),
+                '61.8%': (f"₹{fib_retrace.get('61.8%', 0):.2f}" if fib_retrace.get('61.8%') is not None else ''),
+                '78.6%': (f"₹{fib_retrace.get('78.6%', 0):.2f}" if fib_retrace.get('78.6%') is not None else ''),
+                'Ext 100%': (f"₹{fib_extension.get('100%', 0):.2f}" if fib_extension.get('100%') is not None else ''),
+                'Ext 161.8%': (f"₹{fib_extension.get('161.8%', 0):.2f}" if fib_extension.get('161.8%') is not None else ''),
+                'Ext 261.8%': (f"₹{fib_extension.get('261.8%', 0):.2f}" if fib_extension.get('261.8%') is not None else ''),
             })
         
         fib_df = pd.DataFrame(fib_data)
@@ -128,13 +170,13 @@ def export_elliott_wave_to_excel(ranked_results, all_results, output_file=None):
         score_data = []
         for r in display_results[:10]:
             score_data.append({
-                'Stock': r['symbol'],
-                'EW Structure': f"{r['ew_score']:.0f}/40",
-                'Volume': f"{r['vol_score']:.0f}/20",
-                'Momentum': f"{r['momentum_score']:.0f}/20",
-                'Institutional': f"{r['inst_score']:.0f}/20",
-                'Total Score': f"{r['total_score']:.0f}/100",
-                'Confidence': f"{r['confidence']:.0f}%",
+                'Stock': _get(r, 'symbol', ''),
+                'EW Structure': _get_number(r, 'ew_score', '.0f') + '/40' if _get(r, 'ew_score', None) not in (None, '') else '',
+                'Volume': _get_number(r, 'vol_score', '.0f') + '/20' if _get(r, 'vol_score', None) not in (None, '') else '',
+                'Momentum': _get_number(r, 'momentum_score', '.0f') + '/20' if _get(r, 'momentum_score', None) not in (None, '') else '',
+                'Institutional': _get_number(r, 'inst_score', '.0f') + '/20' if _get(r, 'inst_score', None) not in (None, '') else '',
+                'Total Score': _get_number(r, 'total_score', '.0f') + '/100' if _get(r, 'total_score', None) not in (None, '') else '',
+                'Confidence': _get_percent(r, 'confidence', 0) if _get(r, 'confidence', None) not in (None, '') else '',
             })
         
         score_df = pd.DataFrame(score_data)
@@ -177,11 +219,11 @@ def export_wolfe_wave_to_excel(ranked_results, all_results, output_file=None):
         output_file = get_excel_filename('WW')
     
     # Separate bullish and bearish
-    ranked_bullish = [r for r in ranked_results if r['pattern_type'] == 'Bullish']
-    ranked_bearish = [r for r in ranked_results if r['pattern_type'] == 'Bearish']
+    ranked_bullish = [r for r in ranked_results if _get(r, 'pattern_type') == 'Bullish']
+    ranked_bearish = [r for r in ranked_results if _get(r, 'pattern_type') == 'Bearish']
     
     display_results = ranked_results[:25] if ranked_results else sorted(
-        all_results, key=lambda x: x['confidence'], reverse=True
+        all_results, key=lambda x: x.get('confidence', 0), reverse=True
     )[:25]
     
     with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
@@ -189,21 +231,25 @@ def export_wolfe_wave_to_excel(ranked_results, all_results, output_file=None):
         # ========== SHEET 1: SUMMARY ==========
         summary_data = []
         for i, r in enumerate(display_results):
-            summary_data.append({
-                'Rank': i + 1,
-                'Stock': r['symbol'],
-                'Sector': r['sector'],
-                'Pattern Type': r['pattern_type'],
-                'Score': f"{r['confidence']:.0f}",
-                'Sweet Zone Quality': r['sweet_zone_quality'],
-                'Current Price': f"₹{r['current_price']:.2f}",
-                'P5 (Entry)': f"₹{r['p5']:.2f}",
-                'EPA Target': f"₹{r['epa']:.2f}",
-                'Stop Loss': f"₹{r['stop_loss']:.2f}",
-                'R:R Ratio': r['rr_ratio'],
-                'Potential %': f"{r['potential_pct']:.1f}%",
-                'Status': r['status'],
-            })
+            try:
+                summary_data.append({
+                    'Rank': i + 1,
+                    'Stock': _get(r, 'symbol', ''),
+                    'Sector': _get(r, 'sector', ''),
+                    'Pattern Type': _get(r, 'pattern_type', ''),
+                    'Score': _get_number(r, 'confidence', '.0f'),
+                    'Sweet Zone Quality': _get(r, 'sweet_zone_quality', ''),
+                    'Current Price': _get_currency(r, 'current_price', 2),
+                    'P5 (Entry)': _get_currency(r, 'p5', 2),
+                    'EPA Target': _get_currency(r, 'epa', 2),
+                    'Stop Loss': _get_currency(r, 'stop_loss', 2),
+                    'R:R Ratio': _get(r, 'rr_ratio', ''),
+                    'Potential %': _get_percent(r, 'potential_pct', 1),
+                    'Status': _get(r, 'status', ''),
+                })
+            except Exception as e:
+                logger.warning("Skipping summary row for %s due to error: %s", _get(r, 'symbol'), e)
+                continue
         
         summary_df = pd.DataFrame(summary_data)
         summary_df.to_excel(writer, sheet_name='Summary', index=False)
@@ -214,21 +260,25 @@ def export_wolfe_wave_to_excel(ranked_results, all_results, output_file=None):
         if ranked_bullish:
             bullish_data = []
             for r in ranked_bullish[:15]:
-                bullish_data.append({
-                    'Stock': r['symbol'],
-                    'Score': f"{r['confidence']:.0f}",
-                    'P1 (Low)': f"₹{r['p1']:.2f}",
-                    'P2 (High)': f"₹{r['p2']:.2f}",
-                    'P3 (Low)': f"₹{r['p3']:.2f}",
-                    'P4 (High)': f"₹{r['p4']:.2f}",
-                    'P5 (Entry)': f"₹{r['p5']:.2f}",
-                    'EPA Target': f"₹{r['epa']:.2f}",
-                    'Stop Loss': f"₹{r['stop_loss']:.2f}",
-                    '1-3 Line': r['line_13_quality'],
-                    '2-4 Line': r['line_24_quality'],
-                    'Convergence': 'Yes' if r.get('converging', True) else 'No',
-                    'Entry Quality': r['sweet_zone_quality'],
-                })
+                try:
+                    bullish_data.append({
+                        'Stock': _get(r, 'symbol', ''),
+                        'Score': _get_number(r, 'confidence', '.0f'),
+                        'P1 (Low)': _get_currency(r, 'p1', 2),
+                        'P2 (High)': _get_currency(r, 'p2', 2),
+                        'P3 (Low)': _get_currency(r, 'p3', 2),
+                        'P4 (High)': _get_currency(r, 'p4', 2),
+                        'P5 (Entry)': _get_currency(r, 'p5', 2),
+                        'EPA Target': _get_currency(r, 'epa', 2),
+                        'Stop Loss': _get_currency(r, 'stop_loss', 2),
+                        '1-3 Line': _get(r, 'line_13_quality', ''),
+                        '2-4 Line': _get(r, 'line_24_quality', ''),
+                        'Convergence': 'Yes' if r.get('converging', True) else 'No',
+                        'Entry Quality': _get(r, 'sweet_zone_quality', ''),
+                    })
+                except Exception as e:
+                    logger.warning("Skipping bullish row for %s due to error: %s", _get(r, 'symbol'), e)
+                    continue
             
             bullish_df = pd.DataFrame(bullish_data)
             bullish_df.to_excel(writer, sheet_name='Bullish Setups', index=False)
@@ -239,21 +289,25 @@ def export_wolfe_wave_to_excel(ranked_results, all_results, output_file=None):
         if ranked_bearish:
             bearish_data = []
             for r in ranked_bearish[:15]:
-                bearish_data.append({
-                    'Stock': r['symbol'],
-                    'Score': f"{r['confidence']:.0f}",
-                    'P1 (High)': f"₹{r['p1']:.2f}",
-                    'P2 (Low)': f"₹{r['p2']:.2f}",
-                    'P3 (High)': f"₹{r['p3']:.2f}",
-                    'P4 (Low)': f"₹{r['p4']:.2f}",
-                    'P5 (Entry)': f"₹{r['p5']:.2f}",
-                    'EPA Target': f"₹{r['epa']:.2f}",
-                    'Stop Loss': f"₹{r['stop_loss']:.2f}",
-                    '1-3 Line': r['line_13_quality'],
-                    '2-4 Line': r['line_24_quality'],
-                    'Convergence': 'Yes' if r.get('converging', True) else 'No',
-                    'Entry Quality': r['sweet_zone_quality'],
-                })
+                try:
+                    bearish_data.append({
+                        'Stock': _get(r, 'symbol', ''),
+                        'Score': _get_number(r, 'confidence', '.0f'),
+                        'P1 (High)': _get_currency(r, 'p1', 2),
+                        'P2 (Low)': _get_currency(r, 'p2', 2),
+                        'P3 (High)': _get_currency(r, 'p3', 2),
+                        'P4 (Low)': _get_currency(r, 'p4', 2),
+                        'P5 (Entry)': _get_currency(r, 'p5', 2),
+                        'EPA Target': _get_currency(r, 'epa', 2),
+                        'Stop Loss': _get_currency(r, 'stop_loss', 2),
+                        '1-3 Line': _get(r, 'line_13_quality', ''),
+                        '2-4 Line': _get(r, 'line_24_quality', ''),
+                        'Convergence': 'Yes' if r.get('converging', True) else 'No',
+                        'Entry Quality': _get(r, 'sweet_zone_quality', ''),
+                    })
+                except Exception as e:
+                    logger.warning("Skipping bearish row for %s due to error: %s", _get(r, 'symbol'), e)
+                    continue
             
             bearish_df = pd.DataFrame(bearish_data)
             bearish_df.to_excel(writer, sheet_name='Bearish Setups', index=False)
@@ -263,24 +317,28 @@ def export_wolfe_wave_to_excel(ranked_results, all_results, output_file=None):
         # ========== SHEET 4: PATTERN DETAILS ==========
         detail_data = []
         for r in display_results[:10]:
-            detail_data.append({
-                'Stock': r['symbol'],
-                'Pattern Type': r['pattern_type'],
-                'Score': f"{r['confidence']:.0f}",
-                'Current Price': f"₹{r['current_price']:.2f}",
-                'P1': f"₹{r['p1']:.2f}",
-                'P2': f"₹{r['p2']:.2f}",
-                'P3': f"₹{r['p3']:.2f}",
-                'P4': f"₹{r['p4']:.2f}",
-                'P5': f"₹{r['p5']:.2f}",
-                'EPA': f"₹{r['epa']:.2f}",
-                'Sweet Zone Quality': r['sweet_zone_quality'],
-                'Line 1-3': r['line_13_quality'],
-                'Line 2-4': r['line_24_quality'],
-                'Sector': r['sector'],
-                'RSI': f"{r['rsi']:.1f}",
-                'Volume': f"{r['vol_ratio_20']:.2f}x",
-            })
+            try:
+                detail_data.append({
+                    'Stock': _get(r, 'symbol', ''),
+                    'Pattern Type': _get(r, 'pattern_type', ''),
+                    'Score': _get_number(r, 'confidence', '.0f'),
+                    'Current Price': _get_currency(r, 'current_price', 2),
+                    'P1': _get_currency(r, 'p1', 2),
+                    'P2': _get_currency(r, 'p2', 2),
+                    'P3': _get_currency(r, 'p3', 2),
+                    'P4': _get_currency(r, 'p4', 2),
+                    'P5': _get_currency(r, 'p5', 2),
+                    'EPA': _get_currency(r, 'epa', 2),
+                    'Sweet Zone Quality': _get(r, 'sweet_zone_quality', ''),
+                    'Line 1-3': _get(r, 'line_13_quality', ''),
+                    'Line 2-4': _get(r, 'line_24_quality', ''),
+                    'Sector': _get(r, 'sector', ''),
+                    'RSI': _get_number(r, 'rsi', '.1f'),
+                    'Volume': (_get_number(r, 'vol_ratio_20', '.2f') + 'x') if _get(r, 'vol_ratio_20', None) not in (None, '') else '',
+                })
+            except Exception as e:
+                logger.warning("Skipping detail row for %s due to error: %s", _get(r, 'symbol'), e)
+                continue
         
         detail_df = pd.DataFrame(detail_data)
         detail_df.to_excel(writer, sheet_name='Pattern Details', index=False)
@@ -293,8 +351,8 @@ def export_wolfe_wave_to_excel(ranked_results, all_results, output_file=None):
             ['Generated', datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S IST')],
             ['Total Stocks Scanned', '~150'],
             ['Wolfe Wave Setups Found', len(all_results)],
-            ['Bullish Patterns', len([r for r in all_results if r['pattern_type'] == 'Bullish'])],
-            ['Bearish Patterns', len([r for r in all_results if r['pattern_type'] == 'Bearish'])],
+            ['Bullish Patterns', len([r for r in all_results if _get(r, 'pattern_type') == 'Bullish'])],
+            ['Bearish Patterns', len([r for r in all_results if _get(r, 'pattern_type') == 'Bearish'])],
             ['', ''],
             ['Screening Parameters', ''],
             ['Universe', 'Nifty 50 + Nifty Next 50 + Select Midcaps'],
