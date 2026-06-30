@@ -1,0 +1,22 @@
+|   Rank | Stock      | Sector           | Wave Status                        | Conf%   | Entry Zone   | Stop Loss   | Target 1   | Target 2   | R:R    | Setup Type       |
+|-------:|:-----------|:-----------------|:-----------------------------------|:--------|:-------------|:------------|:-----------|:-----------|:-------|:-----------------|
+|      1 | GRASIM     | Diversified      | W2 retraced 51.3% (near 50% Fib)   | 80%     | ₹3050-3126   | ₹2974       | ₹3352      | ₹3548      | 1:4.4  | Aggressive Entry |
+|      2 | LICHSGFIN  | Housing Finance  | W2 retraced 46.3% (near 38.2% Fib) | 76%     | ₹549-561     | ₹523        | ₹673       | ₹759       | 1:6.4  | Early Entry      |
+|      3 | YESBANK    | Banking          | W2 retraced 55.3% (near 61.8% Fib) | 73%     | ₹22-23       | ₹22         | ₹25        | ₹27        | 1:5.4  | Aggressive Entry |
+|      4 | STARHEALTH | Insurance        | W2 retraced 52.1% (near 50% Fib)   | 72%     | ₹516-528     | ₹503        | ₹557       | ₹584       | 1:3.7  | Aggressive Entry |
+|      5 | BERGEPAINT | Paints           | W2 retraced 52.1% (near 50% Fib)   | 72%     | ₹513-523     | ₹486        | ₹581       | ₹633       | 1:3.6  | Early Entry      |
+|      6 | INDUSINDBK | Banking          | W2 retraced 42.3% (near 38.2% Fib) | 72%     | ₹888-906     | ₹853        | ₹1078      | ₹1206      | 1:6.9  | Early Entry      |
+|      7 | SONACOMS   | Auto Ancillary   | W2 retraced 41.9% (near 38.2% Fib) | 72%     | ₹583-594     | ₹544        | ₹695       | ₹781       | 1:4.4  | Early Entry      |
+|      8 | JSWSTEEL   | Steel            | W2 retraced 29.9% (near 23.6% Fib) | 69%     | ₹1282-1308   | ₹1221       | ₹1450      | ₹1576      | 1:3.8  | Early Entry      |
+|      9 | NMDC       | Mining           | W2 retraced 35.1% (near 38.2% Fib) | 67%     | ₹90-92       | ₹85         | ₹105       | ₹116       | 1:4.2  | Early Entry      |
+|     10 | LT         | Infrastructure   | W2 retraced 35.1% (near 38.2% Fib) | 65%     | ₹3900-3978   | ₹3734       | ₹4662      | ₹5189      | 1:6.1  | Early Entry      |
+|     11 | MANAPPURAM | NBFC             | W2 retraced 43.0% (near 38.2% Fib) | 63%     | ₹294-301     | ₹286        | ₹352       | ₹389       | 1:6.7  | Early Entry      |
+|     12 | SUZLON     | Renewable Energy | W2 retraced 32.0% (near 23.6% Fib) | 63%     | ₹54-55       | ₹51         | ₹71        | ₹83        | 1:7.6  | Early Entry      |
+|     13 | ATGL       | Gas Distribution | W2 retraced 58.8% (near 61.8% Fib) | 60%     | ₹716-730     | ₹686        | ₹971       | ₹1139      | 1:11.2 | Early Entry      |
+|     14 | CGPOWER    | Electricals      | W2 retraced 43.8% (near 38.2% Fib) | 58%     | ₹887-910     | ₹865        | ₹1023      | ₹1109      | 1:5.4  | Early Entry      |
+|     15 | MARICO     | FMCG             | W2 retraced 43.1% (near 38.2% Fib) | 58%     | ₹799-819     | ₹779        | ₹920       | ₹998       | 1:4.9  | Early Entry      |
+|     16 | TATACOMM   | Telecom          | W2 retraced 29.8% (near 23.6% Fib) | 55%     | ₹1937-1976   | ₹1857       | ₹2415      | ₹2736      | 1:7.8  | Early Entry      |
+|     17 | COALINDIA  | Mining           | W2 retraced 98.6% (near 61.8% Fib) | 55%     | ₹431-441     | ₹420        | ₹492       | ₹532       | 1:4.2  | Early Entry      |
+|     18 | SUNPHARMA  | Pharma           | W2 retraced 52.7% (near 50% Fib)   | 55%     | ₹1793-1829   | ₹1722       | ₹2060      | ₹2247      | 1:4.9  | Early Entry      |
+|     19 | DIVISLAB   | Pharma           | W2 retraced 39.2% (near 38.2% Fib) | 54%     | ₹6610-6743   | ₹6321       | ₹7771      | ₹8587      | 1:5.4  | Early Entry      |
+|     20 | ADANIENT   | Conglomerate     | W2 retraced 25.9% (near 23.6% Fib) | 52%     | ₹2878-2950   | ₹2807       | ₹3491      | ₹3879      | 1:9.0  | Aggressive Entry |
